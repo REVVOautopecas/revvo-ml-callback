@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-H/ROxXmVlbvBsZ+sJqPRtJe+2Rhwiybp7LNzbcxchO4='; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>Revvo ML Callback</title>
+<style>body{font-family:system-ui,sans-serif;max-width:560px;margin:15vh auto;padding:0 16px;color:#222;background:#fff}small{color:#666}</style>
+</head>
+<body>
+<h2>Revvo ML: retorno de autorização</h2>
+<p id="msg">Processando…</p>
+<p><small>Esta página não armazena nada. Ela só repassa o retorno do Mercado Livre para o programa rodando no seu próprio computador (127.0.0.1). Se aparecer erro de conexão, copie a URL da barra de endereços e cole no terminal.</small></p>
+<noscript><p>Ative o JavaScript ou copie a URL da barra de endereços e cole no terminal.</p></noscript>
+<script>(function () {
+  "use strict";
+  // Repassa SOMENTE code/state/error ao listener local no Mac. Não guarda, não envia
+  // a nenhum outro lugar e não valida o state (isso é feito no Mac, que conhece o valor).
+  var LOCAL = "http://127.0.0.1:8765/callback";
+  var p = new URLSearchParams(window.location.search);
+  var out = new URLSearchParams();
+  var code = p.get("code"), state = p.get("state"), error = p.get("error");
+  var okState = state && /^[A-Za-z0-9_-]{20,128}$/.test(state);
+  var okCode = code && /^TG-[A-Za-z0-9-]{10,256}$/.test(code);
+  var msg = document.getElementById("msg");
+
+  // Remove code/state desta página do histórico do navegador.
+  window.history.replaceState(null, "", window.location.pathname);
+
+  if (okState && okCode) {
+    out.set("code", code); out.set("state", state);
+  } else if (okState && error && /^[a-z_]{1,64}$/.test(error)) {
+    out.set("error", error); out.set("state", state);
+    var d = p.get("error_description");
+    if (d) out.set("error_description", d.slice(0, 300));
+  } else {
+    msg.textContent = "Nenhum retorno de autorização válido nesta URL.";
+    return;
+  }
+  msg.textContent = "Enviando para o terminal no seu Mac…";
+  window.location.replace(LOCAL + "?" + out.toString());
+})();</script>
+</body>
+</html>
